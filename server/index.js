@@ -6,36 +6,37 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. Convertir Dirección -> Coordenadas (GEOCODING INTELIGENTE)
+// 1. GEOCODING (Dirección -> Coordenadas)
 app.get("/geocode", async (req, res) => {
   try {
     let q = req.query.q;
-    if (!q) return res.status(400).json({ error: "Missing q" });
+    if (!q) return res.status(400).json({ error: "Falta la dirección" });
 
-    // --- TRUCO: Forzar búsqueda en Valledupar ---
-    // Si el usuario no escribió "Valledupar", nosotros lo agregamos.
-    const texto = q.toLowerCase();
-    if (!texto.includes("valledupar") && !texto.includes("cesar")) {
+    // --- TRUCO IMPORTANTE ---
+    // Si el usuario no escribió "Valledupar", nosotros lo agregamos automáticamente.
+    // Así "Calle 12" se convierte en "Calle 12, Valledupar, Colombia"
+    const textoBusqueda = q.toLowerCase();
+    if (!textoBusqueda.includes("valledupar") && !textoBusqueda.includes("cesar")) {
         q = `${q}, Valledupar, Cesar, Colombia`;
     }
-    // -------------------------------------------
+    // ------------------------
 
-    const url = `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(
-      q
-    )}&limit=1`;
+    // Agregamos 'countrycodes=co' para limitar la búsqueda a Colombia
+    const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=co&q=${encodeURIComponent(q)}&limit=1`;
 
     const response = await fetch(url, {
-      headers: { "User-Agent": "halcon-express/1.0" },
+      headers: { "User-Agent": "halcon-express-cotizador/1.0" },
     });
 
     const data = await response.json();
     res.json(data);
   } catch (e) {
-    res.status(500).json({ error: "geocode_failed" });
+    console.error(e);
+    res.status(500).json({ error: "Error buscando dirección" });
   }
 });
 
-// 2. Convertir Coordenadas -> Dirección (Para cuando tocas el mapa)
+// 2. REVERSE GEOCODING (Coordenadas -> Dirección)
 app.get("/reverse-geocode", async (req, res) => {
   try {
     const { lat, lon } = req.query;
@@ -44,31 +45,35 @@ app.get("/reverse-geocode", async (req, res) => {
     const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
 
     const response = await fetch(url, {
-      headers: { "User-Agent": "halcon-express/1.0" },
+      headers: { "User-Agent": "halcon-express-cotizador/1.0" },
     });
 
     const data = await response.json();
     
-    // Limpieza de dirección para que se vea bonita (opcional)
-    let direccion = data.display_name || "Dirección desconocida";
-    // Intentar acortarla quitando ", Colombia" para que quepa mejor
-    direccion = direccion.replace(", Colombia", ""); 
+    // Limpiamos la dirección para que no sea tan larga
+    let direccion = data.display_name || "Ubicación en mapa";
+    // Quitamos el país y códigos postales para que se vea mejor
+    direccion = direccion.split(", Valledupar")[0]; 
 
     res.json({ address: direccion });
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "reverse_geocode_failed" });
+    res.status(500).json({ error: "Error obteniendo dirección" });
   }
 });
 
-// 3. Calcular Ruta
+// 3. RUTAS (Cálculo de Km y Tiempo)
 app.post("/route", async (req, res) => {
   try {
     const { origin, destination } = req.body;
-    if (!origin || !destination) return res.status(400).json({ error: "Missing info" });
-
-    const apiKey = process.env.ORS_API_KEY;
-    if (!apiKey) return res.status(500).json({ error: "Falta API KEY" });
+    
+    // Tu API KEY de OpenRouteService debe estar en el archivo .env
+    const apiKey = process.env.ORS_API_KEY; 
+    
+    if (!apiKey) {
+        console.error("Falta la API KEY en el archivo .env");
+        return res.status(500).json({ error: "Error de configuración del servidor" });
+    }
 
     const response = await fetch(
       "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
@@ -85,20 +90,24 @@ app.post("/route", async (req, res) => {
     );
 
     const data = await response.json();
-    if (!response.ok) return res.status(response.status).json({ error: "ORS error", details: data });
+
+    if (!response.ok) {
+        return res.status(500).json({ error: "Error calculando ruta", details: data });
+    }
 
     const summary = data.features?.[0]?.properties?.summary;
     const routeCoords = data.features?.[0]?.geometry?.coordinates?.map(([lon, lat]) => [lat, lon]);
 
     res.json({
-      distance_m: summary?.distance ?? null,
-      duration_s: summary?.duration ?? null,
+      distance_m: summary?.distance ?? 0,
+      duration_s: summary?.duration ?? 0,
       routeCoords: routeCoords ?? [],
     });
+
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "route_failed" });
+    res.status(500).json({ error: "Error interno del servidor" });
   }
 });
 
-app.listen(3001, () => console.log("✅ Servidor Halcón mejorado en puerto 3001"));
+app.listen(3001, () => console.log("✅ Servidor Halcón LISTO en puerto 3001"));

@@ -329,3 +329,31 @@
   .btn-whatsapp:hover {
       background-color: #128C7E !important; /* Verde Oscuro al pasar el mouse */
   }
+
+  .btn-gps {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  font-size: 1.2rem;
+  cursor: pointer;
+  padding: 5px;
+  border-radius: 50%;
+  transition: all 0.2s;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #666;
+}
+
+.btn-gps:hover {
+  background-color: #eee;
+  color: var(--halcon-orange); /* Se pone naranja al pasar el mouse */
+  transform: translateY(-50%) scale(1.1);
+}
+
+.btn-gps:active {
+  transform: translateY(-50%) scale(0.9);
+}
