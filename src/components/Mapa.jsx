@@ -1,18 +1,6 @@
-import {
-  MapContainer,
-  TileLayer,
-  Marker,
-  Popup,
-  Polyline,
-  useMap,
-  useMapEvents,
-} from "react-leaflet";
+import { MapContainer, TileLayer, Marker, Popup, Polyline, useMap, useMapEvents } from "react-leaflet";
 import "leaflet/dist/leaflet.css";
 import { useEffect } from "react";
-
-
-
-
 
 
 
@@ -22,15 +10,9 @@ function AjustarVista({ origenCoords, destinoCoords, rutaCoords }) {
   useEffect(() => {
     if (rutaCoords && rutaCoords.length > 0) {
       map.fitBounds(rutaCoords, { padding: [50, 50] });
-      return;
-    }
-
-    if (origenCoords && destinoCoords) {
+    } else if (origenCoords && destinoCoords) {
       map.fitBounds([origenCoords, destinoCoords], { padding: [50, 50] });
-      return;
-    }
-
-    if (origenCoords) {
+    } else if (origenCoords) {
       map.setView(origenCoords, 14);
     }
   }, [map, origenCoords, destinoCoords, rutaCoords]);
@@ -43,8 +25,7 @@ function AjustarVista({ origenCoords, destinoCoords, rutaCoords }) {
 function ClickEnMapa({ modo, onPick }) {
   useMapEvents({
     click(e) {
-      const coords = [e.latlng.lat, e.latlng.lng];
-      onPick(modo, coords);
+      onPick(modo, [e.latlng.lat, e.latlng.lng]);
     },
   });
   return null;
@@ -54,59 +35,38 @@ function ClickEnMapa({ modo, onPick }) {
 
 
 export default function Mapa({ origenCoords, destinoCoords, rutaCoords, modo, onPick, onDrag }) {
-
-  const centro = [10.4631, -73.2532];
+  const centro = [10.4631, -73.2532]; // Valledupar
 
   return (
-    <div style={{ height: 420, width: "100%" }}>
-      <MapContainer center={centro} zoom={13} style={{ height: "100%", width: "100%" }}>
+    // Quitamos width/height fijos, dejamos que el CSS del padre controle el tamaño
+    <div style={{ width: "100%", height: "100%" }}>
+      <MapContainer center={centro} zoom={13} style={{ width: "100%", height: "100%" }}>
         <TileLayer url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-
+        
         <ClickEnMapa modo={modo} onPick={onPick} />
-
-
-        <AjustarVista
-        origenCoords={origenCoords}
-        destinoCoords={destinoCoords}
-        rutaCoords={rutaCoords}
-        />
+        <AjustarVista origenCoords={origenCoords} destinoCoords={destinoCoords} rutaCoords={rutaCoords} />
 
         {origenCoords && (
-        <Marker
-            position={origenCoords}
-            draggable={true}
-            eventHandlers={{
-            dragend: (e) => {
-                const p = e.target.getLatLng();
-                onDrag("origen", [p.lat, p.lng]);
-            },
-            }}
-        >
-            <Popup>Origen (arrástrame)</Popup>
-        </Marker>
+          <Marker 
+            position={origenCoords} 
+            draggable={true} 
+            eventHandlers={{ dragend: (e) => onDrag("origen", [e.target.getLatLng().lat, e.target.getLatLng().lng]) }}
+          >
+            <Popup>📍 Origen</Popup>
+          </Marker>
         )}
 
         {destinoCoords && (
-        <Marker
-            position={destinoCoords}
-            draggable={true}
-            eventHandlers={{
-            dragend: (e) => {
-                const p = e.target.getLatLng();
-                onDrag("destino", [p.lat, p.lng]);
-            },
-            }}
-        >
-            <Popup>Destino (arrástrame)</Popup>
-        </Marker>
+          <Marker 
+            position={destinoCoords} 
+            draggable={true} 
+            eventHandlers={{ dragend: (e) => onDrag("destino", [e.target.getLatLng().lat, e.target.getLatLng().lng]) }}
+          >
+            <Popup>🏁 Destino</Popup>
+          </Marker>
         )}
 
-
-        {rutaCoords && rutaCoords.length > 0 && (
-        <Polyline positions={rutaCoords} pathOptions={{ color: "blue", weight: 4 }} />
-        )}
-
-
+        {rutaCoords && <Polyline positions={rutaCoords} pathOptions={{ color: "#2563eb", weight: 5 }} />}
       </MapContainer>
     </div>
   );

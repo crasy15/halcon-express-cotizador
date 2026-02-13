@@ -1,42 +1,323 @@
-#root {
-  max-width: 1280px;
-  margin: 0 auto;
-  padding: 2rem;
-  text-align: center;
-}
-
-.logo {
-  height: 6em;
-  padding: 1.5em;
-  will-change: filter;
-  transition: filter 300ms;
-}
-.logo:hover {
-  filter: drop-shadow(0 0 2em #646cffaa);
-}
-.logo.react:hover {
-  filter: drop-shadow(0 0 2em #61dafbaa);
-}
-
-@keyframes logo-spin {
-  from {
-    transform: rotate(0deg);
+:root {
+    /* Paleta de Colores Halcón Express */
+    --halcon-orange: #FF6B00; /* Naranja vibrante principal */
+    --halcon-orange-dark: #E65100; /* Naranja más oscuro para hover */
+    --halcon-black: #121212; /* Negro profundo para fondos */
+    --halcon-dark-gray: #212121; /* Gris oscuro para tarjetas/paneles */
+    --halcon-light-gray: #F5F5F5; /* Fondo claro para inputs para contraste */
+    --text-dark: #121212;
+    --text-light: #FFFFFF;
+    --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+    --shadow-lg: 0 10px 25px rgba(0,0,0,0.2);
   }
-  to {
-    transform: rotate(360deg);
+  
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+    font-family: 'Montserrat', 'Roboto', sans-serif; /* Fuente más moderna y fuerte */
   }
-}
-
-@media (prefers-reduced-motion: no-preference) {
-  a:nth-of-type(2) .logo {
-    animation: logo-spin infinite 20s linear;
+  
+  body, #root {
+    width: 100%;
+    height: 100vh;
+    background-color: var(--halcon-black); /* Fondo general negro */
+    overflow: hidden;
   }
-}
+  
+  /* --- CONTENEDOR PRINCIPAL (LAYOUT) --- */
+  .app-container {
+    display: flex;
+    height: 100vh;
+    width: 100vw;
+    flex-direction: column-reverse; /* Móvil: Formulario abajo */
+    background-color: var(--halcon-black);
+  }
+  
+  /* Pantallas grandes (Laptop/PC) */
+  @media (min-width: 850px) {
+    .app-container {
+      flex-direction: row; /* PC: Formulario izquierda */
+    }
+  }
+  
+  /* --- PANEL LATERAL (FORMULARIO) --- */
+  .sidebar {
+    background: var(--text-light); /* Fondo blanco para máxima legibilidad del formulario */
+    padding: 25px;
+    overflow-y: auto;
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    box-shadow: var(--shadow-lg);
+    z-index: 100;
+    position: relative;
+  }
+  
+  @media (min-width: 850px) {
+    .sidebar {
+      width: 420px;
+      min-width: 420px;
+      border-right: 3px solid var(--halcon-orange); /* Línea divisoria naranja */
+    }
+  }
+  
+  @media (max-width: 849px) {
+    .sidebar {
+      height: 60%; /* Un poco más alto en móvil */
+      width: 100%;
+      border-top-left-radius: 25px;
+      border-top-right-radius: 25px;
+      border-top: 3px solid var(--halcon-orange); /* Línea superior naranja */
+    }
+  }
+  
+  /* --- ENCABEZADO --- */
+  .header h1 {
+    font-size: 1.8rem;
+    color: var(--halcon-black);
+    font-weight: 900;
+    text-transform: uppercase;
+    letter-spacing: -0.5px;
+  }
+  .header span.accent {
+    color: var(--halcon-orange);
+  }
+  .header p.subtitle {
+    color: #666;
+    font-weight: 500;
+  }
+  
+  /* --- INPUTS --- */
+  .input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    background-color: var(--halcon-light-gray);
+    padding: 15px;
+    border-radius: 16px;
+  }
+  
+  .input-wrapper {
+    position: relative;
+  }
+  
+  .input-icon {
+    position: absolute;
+    left: 14px;
+    top: 50%;
+    transform: translateY(-50%);
+    font-size: 1.3rem;
+    color: var(--halcon-orange); /* Iconos naranjas */
+    z-index: 1;
+  }
+  
+  .styled-input {
+    width: 100%;
+    padding: 14px 14px 14px 45px;
+    border: 2px solid transparent;
+    border-radius: 12px;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--halcon-black);
+    background-color: var(--text-light);
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+  }
+  
+  .styled-input::placeholder {
+      color: #999;
+      font-weight: normal;
+  }
+  
+  .styled-input:focus {
+    border-color: var(--halcon-orange); /* Borde naranja al enfocar */
+    outline: none;
+    box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
+  }
+  
+  /* --- BOTONES --- */
+  .btn-primary, .btn-whatsapp {
+    background-color: var(--halcon-orange);
+    color: var(--text-light);
+    padding: 16px;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 800;
+    text-transform: uppercase;
+    cursor: pointer;
+    transition: all 0.2s;
+    width: 100%;
+    box-shadow: 0 4px 15px rgba(255, 107, 0, 0.3);
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .btn-primary:hover, .btn-whatsapp:hover {
+    background-color: var(--halcon-orange-dark);
+    transform: translateY(-2px);
+  }
+  .btn-primary:active, .btn-whatsapp:active {
+    transform: translateY(1px);
+  }
+  
+  /* Botón de WhatsApp específico (opcionalmente verde, pero lo dejé naranja para consistencia de marca) */
+  .btn-whatsapp {
+      margin-top: 10px;
+      font-size: 1rem;
+  }
+  
+  /* --- TARJETAS DE DATOS --- */
+  .info-card {
+    background: var(--halcon-black); /* Tarjeta negra */
+    color: var(--text-light);
+    padding: 20px;
+    border-radius: 16px;
+    position: relative;
+    overflow: hidden;
+  }
+  
+  .info-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; width: 6px; height: 100%;
+      background-color: var(--halcon-orange); /* Barra lateral naranja */
+  }
+  
+  .price-label {
+      font-size: 0.9rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      opacity: 0.8;
+  }
+  
+  .price-tag {
+    font-size: 2.5rem;
+    font-weight: 900;
+    color: var(--halcon-orange);
+    margin: 5px 0 15px 0;
+  }
+  
+  .metrics-container {
+      display: flex;
+      gap: 15px;
+      padding-top: 15px;
+      border-top: 1px solid rgba(255,255,255,0.1);
+  }
+  
+  .metric-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
+  }
+  .metric-item span { color: var(--halcon-orange); }
+  
+  /* --- EXTRAS (CHECKBOXES) --- */
+  .extras-container {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  /* Checkbox personalizado */
+  .extra-label {
+    display: flex;
+    align-items: center;
+    padding: 12px 15px;
+    background-color: var(--text-light);
+    border: 2px solid #eee;
+    border-radius: 12px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 600;
+    color: var(--halcon-black);
+  }
+  
+  .extra-label:hover { background-color: #fff5ec; }
+  
+  /* Estilo cuando está seleccionado */
+  .extra-label.checked {
+      border-color: var(--halcon-orange);
+      background-color: #fff0e0;
+      color: var(--halcon-orange-dark);
+  }
+  
+  /* Ocultar el checkbox nativo */
+  .extra-label input[type="checkbox"] { display: none; }
+  
+  /* Icono del checkbox */
+  .checkbox-icon {
+      width: 24px; height: 24px;
+      border-radius: 6px;
+      border: 2px solid #ddd;
+      margin-right: 12px;
+      display: flex; align-items: center; justify-content: center;
+      color: transparent;
+      transition: all 0.2s;
+  }
+  
+  .extra-label.checked .checkbox-icon {
+      background-color: var(--halcon-orange);
+      border-color: var(--halcon-orange);
+      color: white;
+  }
+  
+  
+  /* --- MAPA --- */
+  .map-container {
+    flex-grow: 1;
+    position: relative;
+    height: 100%;
+    width: 100%;
+  }
+  
+  /* Controles flotantes en el mapa */
+  .map-controls {
+    position: absolute;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: var(--halcon-black); /* Fondo negro */
+    padding: 8px 12px;
+    border-radius: 30px;
+    box-shadow: var(--shadow-lg);
+    z-index: 999;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-size: 0.9rem;
+    color: var(--text-light);
+  }
+  
+  .pill {
+    padding: 6px 14px;
+    border-radius: 20px;
+    cursor: pointer;
+    font-weight: 700;
+    transition: all 0.3s;
+    background-color: rgba(255,255,255,0.1);
+  }
+  
+  .pill:hover { background-color: rgba(255,255,255,0.2); }
+  
+  .pill.active {
+    background: var(--halcon-orange); /* Naranja cuando está activo */
+    color: var(--text-light);
+    box-shadow: 0 2px 10px rgba(255, 107, 0, 0.4);
+  }
 
-.card {
-  padding: 2em;
-}
-
-.read-the-docs {
-  color: #888;
-}
+  /* Leaflet Overrides para que combine */
+  .leaflet-bar a {
+    background-color: var(--halcon-black) !important;
+    color: var(--halcon-orange) !important;
+    border-bottom: 1px solid #333 !important;
+  }
+  .leaflet-popup-content-wrapper, .leaflet-popup-tip {
+      background: var(--halcon-black) !important;
+      color: var(--text-light) !important;
+      border: 2px solid var(--halcon-orange);
+  }
