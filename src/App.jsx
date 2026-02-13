@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Mapa from "./components/Mapa";
-import "./App.css"; // Importamos los nuevos estilos Naranja/Negro
+import "./App.css"; 
 
 export default function App() {
   const [origen, setOrigen] = useState("");
@@ -12,7 +12,6 @@ export default function App() {
   const [rutaCoords, setRutaCoords] = useState(null);
   const [tiempoMin, setTiempoMin] = useState(null);
   
-  // Estados de los extras
   const [extrasStates, setExtrasStates] = useState({
     despues9pm: false,
     lloviendo: false,
@@ -21,7 +20,6 @@ export default function App() {
 
   const [modoSeleccion, setModoSeleccion] = useState("origen");
 
-  // Formateador de moneda
   const formatoMoneda = (valor) => {
     return new Intl.NumberFormat("es-CO", {
       style: "currency",
@@ -31,10 +29,9 @@ export default function App() {
     }).format(valor);
   };
 
-  // Función centralizada para calcular precio
   const calcularPrecioTotal = (km, states) => {
     const kmNum = parseFloat(km);
-    const d = Math.max(kmNum, 1); // Mínimo 1km
+    const d = Math.max(kmNum, 1);
     let base = 0;
     
     if (d >= 1 && d <= 4.9) base = 5000;
@@ -54,7 +51,6 @@ export default function App() {
     try {
       if (!origen.trim() || !destino.trim()) return alert("⚠️ Escribe origen y destino.");
 
-      // 1. Geocodificar
       const buscarCoords = async (texto) => {
         const res = await fetch(`http://localhost:3001/geocode?q=${encodeURIComponent(texto)}`);
         const data = await res.json();
@@ -69,7 +65,6 @@ export default function App() {
       setOrigenCoords(cOrigen);
       setDestinoCoords(cDestino);
 
-      // 2. Obtener Ruta
       const resRuta = await fetch("http://localhost:3001/route", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -85,35 +80,56 @@ export default function App() {
       setRutaCoords(dataRuta.routeCoords);
       setDistancia(km);
       setTiempoMin(min);
-
-      // 3. Calcular Precio Inicial
       setPrecio(calcularPrecioTotal(km, extrasStates));
       
     } catch (error) {
       console.error(error);
-      alert("Error calculando la ruta. Revisa la consola.");
+      alert("Error calculando la ruta.");
     }
   };
 
-  // Manejar cambios en los checkboxes y recalcular precio en tiempo real
   const handleExtraChange = (nombreExtra) => {
     const newStates = { ...extrasStates, [nombreExtra]: !extrasStates[nombreExtra] };
     setExtrasStates(newStates);
-    
-    // Si ya tenemos una distancia calculada, actualizamos el precio inmediatamente
     if (distancia) {
         setPrecio(calcularPrecioTotal(distancia, newStates));
     }
   };
 
+  // --- NUEVA LÓGICA: Obtener dirección al hacer clic ---
+  const obtenerDireccionDeCoords = async (lat, lon) => {
+    try {
+        const res = await fetch(`http://localhost:3001/reverse-geocode?lat=${lat}&lon=${lon}`);
+        const data = await res.json();
+        // Limpiamos un poco la dirección para que no sea tan larga (opcional)
+        // Tomamos solo los primeros componentes si es muy larga, o la dejamos completa.
+        return data.address || "Ubicación en mapa";
+    } catch (error) {
+        console.error("Error reverse geocode", error);
+        return "Ubicación marcada";
+    }
+  };
+
   const onMapInteract = async (modo, coords) => {
+    const [lat, lon] = coords;
+    
+    // 1. Actualizar coordenadas visuales inmediatamente (para que el pin se mueva rápido)
     const nuevoOrigen = modo === "origen" ? coords : origenCoords;
     const nuevoDestino = modo === "destino" ? coords : destinoCoords;
 
-    if (modo === "origen") { setOrigenCoords(coords); setOrigen("📍 Ubicación seleccionada"); }
-    else { setDestinoCoords(coords); setDestino("🏁 Ubicación seleccionada"); }
+    if (modo === "origen") {
+        setOrigenCoords(coords);
+        setOrigen("🔍 Buscando calle..."); // Feedback inmediato
+        const direccion = await obtenerDireccionDeCoords(lat, lon);
+        setOrigen(direccion); // Actualizar con nombre real
+    } else {
+        setDestinoCoords(coords);
+        setDestino("🔍 Buscando calle..."); 
+        const direccion = await obtenerDireccionDeCoords(lat, lon);
+        setDestino(direccion);
+    }
 
-    // Si ambos puntos existen, recalcular ruta automáticamente
+    // 2. Si ambos puntos existen, recalcular ruta automáticamente
     if (nuevoOrigen && nuevoDestino) {
         const res = await fetch("http://localhost:3001/route", {
             method: "POST", headers: { "Content-Type": "application/json" },
@@ -144,7 +160,6 @@ export default function App() {
     window.open(`https://wa.me/573156777316?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
-  // Componente de Checkbox personalizado para el nuevo diseño
   const ExtraCheckbox = ({ label, name, checked }) => (
     <label className={`extra-label ${checked ? 'checked' : ''}`}>
         <div className="checkbox-icon">{checked && "✓"}</div>
@@ -155,7 +170,6 @@ export default function App() {
 
   return (
     <div className="app-container">
-      {/* PANEL IZQUIERDO/INFERIOR (Formulario) */}
       <div className="sidebar">
         <div className="header">
           <h1>Halcón <span className="accent">Express</span></h1>
@@ -202,7 +216,6 @@ export default function App() {
         )}
       </div>
 
-      {/* PANEL DERECHO/SUPERIOR (Mapa) */}
       <div className="map-container">
         <div className="map-controls">
             <span>Modo Mapa:</span>

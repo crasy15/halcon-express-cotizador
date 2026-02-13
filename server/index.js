@@ -1,12 +1,13 @@
 import express from "express";
 import cors from "cors";
 import "dotenv/config";
-
+//
 
 const app = express();
 app.use(cors());
 app.use(express.json());
 
+// 1. Convertir Dirección -> Coordenadas
 app.get("/geocode", async (req, res) => {
   try {
     const q = req.query.q;
@@ -18,7 +19,7 @@ app.get("/geocode", async (req, res) => {
 
     const response = await fetch(url, {
       headers: {
-        "User-Agent": "halcon-express-cotizador/1.0 (contacto@tudominio.com)",
+        "User-Agent": "halcon-express-cotizador/1.0 (contacto@halcon.com)",
       },
     });
 
@@ -29,6 +30,31 @@ app.get("/geocode", async (req, res) => {
   }
 });
 
+// 2. NUEVO: Convertir Coordenadas -> Dirección (Geocodificación Inversa)
+app.get("/reverse-geocode", async (req, res) => {
+  try {
+    const { lat, lon } = req.query;
+    if (!lat || !lon) return res.status(400).json({ error: "Faltan coordenadas" });
+
+    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+
+    const response = await fetch(url, {
+      headers: {
+        "User-Agent": "halcon-express-cotizador/1.0 (contacto@halcon.com)",
+      },
+    });
+
+    const data = await response.json();
+    
+    // Devolvemos el nombre formateado o un mensaje genérico si falla
+    res.json({ address: data.display_name || "Dirección desconocida" });
+  } catch (e) {
+    console.error(e);
+    res.status(500).json({ error: "reverse_geocode_failed" });
+  }
+});
+
+// 3. Calcular Ruta (OpenRouteService)
 app.post("/route", async (req, res) => {
   try {
     const { origin, destination } = req.body;
@@ -42,7 +68,6 @@ app.post("/route", async (req, res) => {
       return res.status(500).json({ error: "ORS_API_KEY not set in server/.env" });
     }
 
-    // ORS espera [lon, lat]
     const body = {
       coordinates: [
         [origin[1], origin[0]],
@@ -68,12 +93,9 @@ app.post("/route", async (req, res) => {
       return res.status(response.status).json({ error: "ORS error", details: data });
     }
 
-    // GeoJSON trae geometry.coordinates => [[lon,lat],[lon,lat],...]
-    // distancia en metros y duración en segundos:
     const summary = data.features?.[0]?.properties?.summary;
-
     const routeCoords = data.features?.[0]?.geometry?.coordinates?.map(
-      ([lon, lat]) => [lat, lon] // convertimos a [lat,lon] para Leaflet
+      ([lon, lat]) => [lat, lon]
     );
 
     res.json({
@@ -87,5 +109,4 @@ app.post("/route", async (req, res) => {
   }
 });
 
-
-app.listen(3001, () => console.log("✅ Backend listo en http://localhost:3001"));
+app.listen(3001, () => console.log("✅ Backend Halcón listo en http://localhost:3001"));
