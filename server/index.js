@@ -6,74 +6,90 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// 1. GEOCODING (Dirección -> Coordenadas)
+// --- CONFIGURACIÓN ARCGIS ---
+const ARCGIS_GEOCODE_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
+const ARCGIS_REVERSE_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
+
+// 1. BUSCAR DIRECCIÓN (Usando ArcGIS - Mucho más exacto)
 app.get("/geocode", async (req, res) => {
   try {
-    let q = req.query.q;
-    if (!q) return res.status(400).json({ error: "Falta la dirección" });
+    const q = req.query.q;
+    if (!q) return res.status(400).json({ error: "Falta dirección" });
 
-    // --- TRUCO IMPORTANTE ---
-    // Si el usuario no escribió "Valledupar", nosotros lo agregamos automáticamente.
-    // Así "Calle 12" se convierte en "Calle 12, Valledupar, Colombia"
-    const textoBusqueda = q.toLowerCase();
-    if (!textoBusqueda.includes("valledupar") && !textoBusqueda.includes("cesar")) {
-        q = `${q}, Valledupar, Cesar, Colombia`;
+    // Truco: Si no dicen la ciudad, asumimos Valledupar para mejorar precisión
+    let direccionBusqueda = q;
+    const texto = q.toLowerCase();
+    if (!texto.includes("valledupar") && !texto.includes("cesar")) {
+        direccionBusqueda = `${q}, Valledupar, Cesar`;
     }
-    // ------------------------
 
-    // Agregamos 'countrycodes=co' para limitar la búsqueda a Colombia
-    const url = `https://nominatim.openstreetmap.org/search?format=json&countrycodes=co&q=${encodeURIComponent(q)}&limit=1`;
+    // Consultamos a ArcGIS
+    const url = new URL(ARCGIS_GEOCODE_URL);
+    url.searchParams.append("f", "json");
+    url.searchParams.append("singleLine", direccionBusqueda);
+    url.searchParams.append("countryCode", "COL"); // Solo busca en Colombia
+    url.searchParams.append("maxLocations", "1");
 
-    const response = await fetch(url, {
-      headers: { "User-Agent": "halcon-express-cotizador/1.0" },
-    });
-
+    const response = await fetch(url);
     const data = await response.json();
-    res.json(data);
+
+    // ArcGIS devuelve "candidates". Si hay al menos uno, lo usamos.
+    if (data.candidates && data.candidates.length > 0) {
+      const mejorCandidato = data.candidates[0];
+      
+      // Devolvemos el formato que tu App espera: [{ lat, lon, display_name }]
+      res.json([{
+        lat: mejorCandidato.location.y,
+        lon: mejorCandidato.location.x,
+        display_name: mejorCandidato.address
+      }]);
+    } else {
+      res.json([]); // No se encontró nada
+    }
+
   } catch (e) {
-    console.error(e);
+    console.error("Error ArcGIS Geocode:", e);
     res.status(500).json({ error: "Error buscando dirección" });
   }
 });
 
-// 2. REVERSE GEOCODING (Coordenadas -> Dirección)
+// 2. OBTENER DIRECCIÓN DESDE COORDENADAS (Reverse Geocode ArcGIS)
 app.get("/reverse-geocode", async (req, res) => {
   try {
     const { lat, lon } = req.query;
     if (!lat || !lon) return res.status(400).json({ error: "Faltan coordenadas" });
 
-    const url = `https://nominatim.openstreetmap.org/reverse?format=json&lat=${lat}&lon=${lon}`;
+    const url = new URL(ARCGIS_REVERSE_URL);
+    url.searchParams.append("f", "json");
+    url.searchParams.append("location", `${lon},${lat}`); // ArcGIS pide lon,lat
+    url.searchParams.append("distance", "50"); // Radio de búsqueda en metros
 
-    const response = await fetch(url, {
-      headers: { "User-Agent": "halcon-express-cotizador/1.0" },
-    });
-
+    const response = await fetch(url);
     const data = await response.json();
-    
-    // Limpiamos la dirección para que no sea tan larga
-    let direccion = data.display_name || "Ubicación en mapa";
-    // Quitamos el país y códigos postales para que se vea mejor
-    direccion = direccion.split(", Valledupar")[0]; 
+
+    let direccion = "Ubicación en mapa";
+
+    if (data.address) {
+      // ArcGIS devuelve direcciones muy bonitas y limpias
+      // Ejemplo: "Calle 16 6-20, Valledupar, Cesar"
+      direccion = data.address.LongLabel || data.address.Match_addr;
+    }
 
     res.json({ address: direccion });
+
   } catch (e) {
-    console.error(e);
+    console.error("Error ArcGIS Reverse:", e);
     res.status(500).json({ error: "Error obteniendo dirección" });
   }
 });
 
-// 3. RUTAS (Cálculo de Km y Tiempo)
+// 3. CALCULAR RUTA (Seguimos usando OpenRouteService que es excelente para rutas)
 app.post("/route", async (req, res) => {
   try {
     const { origin, destination } = req.body;
-    
-    // Tu API KEY de OpenRouteService debe estar en el archivo .env
-    const apiKey = process.env.ORS_API_KEY; 
-    
-    if (!apiKey) {
-        console.error("Falta la API KEY en el archivo .env");
-        return res.status(500).json({ error: "Error de configuración del servidor" });
-    }
+    const apiKey = process.env.ORS_API_KEY;
+
+    if (!apiKey) return res.status(500).json({ error: "Falta API KEY" });
 
     const response = await fetch(
       "https://api.openrouteservice.org/v2/directions/driving-car/geojson",
@@ -91,9 +107,7 @@ app.post("/route", async (req, res) => {
 
     const data = await response.json();
 
-    if (!response.ok) {
-        return res.status(500).json({ error: "Error calculando ruta", details: data });
-    }
+    if (!response.ok) return res.status(500).json({ error: "Error en rutas" });
 
     const summary = data.features?.[0]?.properties?.summary;
     const routeCoords = data.features?.[0]?.geometry?.coordinates?.map(([lon, lat]) => [lat, lon]);
@@ -106,8 +120,8 @@ app.post("/route", async (req, res) => {
 
   } catch (e) {
     console.error(e);
-    res.status(500).json({ error: "Error interno del servidor" });
+    res.status(500).json({ error: "Error interno" });
   }
 });
 
-app.listen(3001, () => console.log("✅ Servidor Halcón LISTO en puerto 3001"));
+app.listen(3001, () => console.log("✅ Servidor con ArcGIS listo en puerto 3001"));
