@@ -1,4 +1,6 @@
 export const CONFIG = {
+
+    
   // Información de contacto
   WHATSAPP: {
     NUMERO: "573156777316", // Se cambia aquí y se actualiza en todo lado
