@@ -79,7 +79,7 @@ export default function App() {
         const coords = [pos.coords.latitude, pos.coords.longitude];
         let direccionTexto = "Ubicación GPS";
         try {
-            const res = await fetch(`http://localhost:3001/reverse-geocode?lat=${coords[0]}&lon=${coords[1]}`);
+            const res = await fetch(`https://halcon-express-backend.onrender.com/reverse-geocode?lat=${coords[0]}&lon=${coords[1]}`);
             const data = await res.json();
             if(data.address) direccionTexto = data.address;
         } catch(e) { console.error(e); }
@@ -102,7 +102,7 @@ export default function App() {
 
   const recalcularRuta = async (p1, p2) => {
     try {
-        const res = await fetch("http://localhost:3001/route", {
+        const res = await fetch("https://halcon-express-backend.onrender.com/route", {
             method: "POST", headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ origin: p1, destination: p2 }),
         });
@@ -122,7 +122,7 @@ export default function App() {
       if (!origen.trim() || !destino.trim()) return alert("⚠️ Escribe origen y destino.");
 
       const buscarCoords = async (texto) => {
-        const res = await fetch(`http://localhost:3001/geocode?q=${encodeURIComponent(texto)}`);
+        const res = await fetch(`https://halcon-express-backend.onrender.com/geocode?q=${encodeURIComponent(texto)}`);
         const data = await res.json();
         return data.length ? [parseFloat(data[0].lat), parseFloat(data[0].lon)] : null;
       };
@@ -150,7 +150,7 @@ export default function App() {
 
   const obtenerDireccionDeCoords = async (lat, lon) => {
     try {
-        const res = await fetch(`http://localhost:3001/reverse-geocode?lat=${lat}&lon=${lon}`);
+        const res = await fetch(`https://halcon-express-backend.onrender.com/reverse-geocode?lat=${lat}&lon=${lon}`);
         const data = await res.json();
         return data.address || "Ubicación en mapa";
     } catch (error) { return "Ubicación marcada"; }
