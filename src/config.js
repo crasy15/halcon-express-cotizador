@@ -1,6 +1,6 @@
 export const CONFIG = {
 
-    
+
   // Información de contacto
   WHATSAPP: {
     NUMERO: "573156777316", // Se cambia aquí y se actualiza en todo lado
@@ -21,6 +21,14 @@ export const CONFIG = {
     LLUVIA: 2000,
     BARRIO_COMPLEJO: 3000,
   },
+
+  // Configuración de Velocidad para estimar tiempos (en km/h)
+  VELOCIDAD: {
+    URBANA_MIN: 30,  //Velocidad con tráfico (Tiempo Máximo)
+    URBANA_MAX: 50,  //Velocidad sin tráfico (Tiempo Mínimo)
+    FACTOR_TRAFICO: 1.30, //factor multiplicador para ajustar tiempos por tráfico 
+  },
+
 
   // Configuración de la API (Backend)
   API: {

@@ -78,7 +78,7 @@ export default function App() {
             <div className="price-tag">{formatoMoneda(precio)}</div>
             <div className="metrics-container">
                 <div className="metric-item"><span>📏</span> {distancia} km</div>
-                <div className="metric-item"><span>⏱</span> {tiempoMin} min</div>
+                <div className="metric-item"><span> ⏱ Tiempo estimado:</span> {tiempoMin.min} - {tiempoMin.max} min</div>
             </div>
           </div>
         )}

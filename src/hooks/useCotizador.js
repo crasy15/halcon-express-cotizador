@@ -54,15 +54,28 @@ export const useCotizador = () => {
   // --- LÓGICA DE NEGOCIO ---
 
   const recalcularRuta = async (p1, p2) => {
-    const data = await getRoute(p1, p2);
-    if(data) {
-        const km = (data.distance_m / 1000).toFixed(2);
-        setRutaCoords(data.routeCoords);
-        setDistancia(km);
-        setTiempoMin((data.duration_s / 60).toFixed(0));
-        setPrecio(calcularPrecioTotal(km, extrasStates));
-    }
-  };
+  const data = await getRoute(p1, p2);
+
+  if (data) {
+    const km = data.distance_m / 1000;
+
+    setRutaCoords(data.routeCoords);
+    setDistancia(km.toFixed(2));
+
+    // 🔥 CÁLCULO NUEVO DE TIEMPO ESTIMADO
+    const tiempoMinimo = (km / CONFIG.VELOCIDAD.URBANA_MAX) * 60 * CONFIG.VELOCIDAD.FACTOR_TRAFICO;
+    const tiempoMaximo = (km / CONFIG.VELOCIDAD.URBANA_MIN) * 60 * CONFIG.VELOCIDAD.FACTOR_TRAFICO;
+    const tiempoEstimado = {
+      min: Math.round(tiempoMinimo),
+      max: Math.round(tiempoMaximo),
+    };
+
+    setTiempoMin(tiempoEstimado); // ahora guardas un objeto
+
+    setPrecio(calcularPrecioTotal(km, extrasStates));
+  }
+};
+
 
   const usarGPS = (tipo) => {
     if (!("geolocation" in navigator)) return alert("Tu dispositivo no soporta GPS.");
