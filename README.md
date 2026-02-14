@@ -69,17 +69,28 @@ export const CONFIG = {
   }
 };
 
+```
 
-Instalación y Ejecución
+
+
+## instalación y Ejecución
+
 🔹 Requisitos Previos
 
 Node.js (v16 o superior)
 
+### Clonar el Repositorio
+```js
 git clone <tu-repositorio>
 cd halcon-express-cotizador
 
+```
+
+
 ## Configurar el Servidor (Backend)
 El servidor actúa como proxy para proteger tus API Keys y evitar problemas de CORS.
+
+```js
 
 cd server
 npm install
@@ -89,27 +100,48 @@ npm install
 
 node index.js
 
+```
+
+
 El servidor correrá en:
+
+```js
 http://localhost:3001
 
-## Configurar el Cliente (Frontend)
+```
+
+
+### Configurar el Cliente (Frontend)
+
+```js
 cd ..
 npm install
 npm run dev
 
+```
 
-##  Scripts Disponibles
+
+
+### Scripts Disponibles
+```js
 
 npm run dev      # Inicia servidor de desarrollo
 npm run build    # Compila para producción (carpeta dist)
 npm run preview  # Vista previa del build
 npm run lint     # Ejecuta ESLint
 
-## Despliegue (Producción)
+```
+
+
+### Despliegue (Producción)
+```js
 
 npm run build
 
-##Stack Tecnológico
+```
+
+
+### Stack Tecnológico
 
 Frontend: React 18 + Vite
 
@@ -120,5 +152,7 @@ Frontend: React 18 + Vite
 🖥️ Backend: Node.js + Express
 
 🧹 Linter: ESLint
+
+
 
 
