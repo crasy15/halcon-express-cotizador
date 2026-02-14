@@ -3,57 +3,65 @@ import cors from "cors";
 import "dotenv/config";
 
 const app = express();
-app.use(cors());
+
+// 1. Configuración de CORS (Seguridad)
+// Solo permitimos peticiones desde tu PC (localhost) y tu App en Vercel
+app.use(
+  cors({
+    origin: [
+      "http://localhost:5173",                   // Tu entorno local
+      "https://halcon-express-cotizador.vercel.app" // Tu producción en Vercel
+    ],
+    methods: ["GET", "POST", "OPTIONS"],
+    allowedHeaders: ["Content-Type", "Authorization"], // Agregué Auth por si acaso
+  })
+);
+
 app.use(express.json());
 
 // --- CONFIGURACIÓN ARCGIS ---
 const ARCGIS_GEOCODE_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
 const ARCGIS_REVERSE_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
 
-// 1. BUSCAR DIRECCIÓN (Usando ArcGIS - Mucho más exacto)
+// 1. BUSCAR DIRECCIÓN (Geocoding)
 app.get("/geocode", async (req, res) => {
   try {
     const q = req.query.q;
     if (!q) return res.status(400).json({ error: "Falta dirección" });
 
-    // Truco: Si no dicen la ciudad, asumimos Valledupar para mejorar precisión
+    // Truco: Forzar Valledupar si no se especifica
     let direccionBusqueda = q;
     const texto = q.toLowerCase();
     if (!texto.includes("valledupar") && !texto.includes("cesar")) {
         direccionBusqueda = `${q}, Valledupar, Cesar`;
     }
 
-    // Consultamos a ArcGIS
     const url = new URL(ARCGIS_GEOCODE_URL);
     url.searchParams.append("f", "json");
     url.searchParams.append("singleLine", direccionBusqueda);
-    url.searchParams.append("countryCode", "COL"); // Solo busca en Colombia
+    url.searchParams.append("countryCode", "COL");
     url.searchParams.append("maxLocations", "1");
 
     const response = await fetch(url);
     const data = await response.json();
 
-    // ArcGIS devuelve "candidates". Si hay al menos uno, lo usamos.
     if (data.candidates && data.candidates.length > 0) {
       const mejorCandidato = data.candidates[0];
-      
-      // Devolvemos el formato que tu App espera: [{ lat, lon, display_name }]
       res.json([{
         lat: mejorCandidato.location.y,
         lon: mejorCandidato.location.x,
         display_name: mejorCandidato.address
       }]);
     } else {
-      res.json([]); // No se encontró nada
+      res.json([]);
     }
-
   } catch (e) {
     console.error("Error ArcGIS Geocode:", e);
     res.status(500).json({ error: "Error buscando dirección" });
   }
 });
 
-// 2. OBTENER DIRECCIÓN DESDE COORDENADAS (Reverse Geocode ArcGIS)
+// 2. OBTENER DIRECCIÓN DESDE COORDENADAS (Reverse Geocoding)
 app.get("/reverse-geocode", async (req, res) => {
   try {
     const { lat, lon } = req.query;
@@ -61,20 +69,16 @@ app.get("/reverse-geocode", async (req, res) => {
 
     const url = new URL(ARCGIS_REVERSE_URL);
     url.searchParams.append("f", "json");
-    url.searchParams.append("location", `${lon},${lat}`); // ArcGIS pide lon,lat
-    url.searchParams.append("distance", "50"); // Radio de búsqueda en metros
+    url.searchParams.append("location", `${lon},${lat}`);
+    url.searchParams.append("distance", "50");
 
     const response = await fetch(url);
     const data = await response.json();
 
     let direccion = "Ubicación en mapa";
-
     if (data.address) {
-      // ArcGIS devuelve direcciones muy bonitas y limpias
-      // Ejemplo: "Calle 16 6-20, Valledupar, Cesar"
       direccion = data.address.LongLabel || data.address.Match_addr;
     }
-
     res.json({ address: direccion });
 
   } catch (e) {
@@ -83,7 +87,7 @@ app.get("/reverse-geocode", async (req, res) => {
   }
 });
 
-// 3. CALCULAR RUTA (Seguimos usando OpenRouteService que es excelente para rutas)
+// 3. CALCULAR RUTA (OpenRouteService)
 app.post("/route", async (req, res) => {
   try {
     const { origin, destination } = req.body;
@@ -124,4 +128,4 @@ app.post("/route", async (req, res) => {
   }
 });
 
-app.listen(3001, () => console.log("✅ Servidor con ArcGIS listo en puerto 3001"));
+app.listen(3001, () => console.log("✅ Servidor listo en puerto 3001"));
