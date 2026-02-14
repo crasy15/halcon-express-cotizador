@@ -1,78 +1,18 @@
-import React, { useEffect, useRef } from 'react';
-import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
-import { URL_BASE } from '../config';
+// Icono oficial de WhatsApp
+export const LogoWhatsApp = () => (
+  <svg viewBox="0 0 30.667 30.667" width="24" height="24" fill="#ffffff" style={{ marginRight: "8px", filter: "drop-shadow(0px 1px 1px rgba(0,0,0,0.2))" }}>
+    <path d="M30.667,14.939c0,8.25-6.74,14.938-15.056,14.938c-2.639,0-5.118-0.675-7.276-1.857L0,30.667l2.717-8.017 c-1.37-2.25-2.159-4.892-2.159-7.712C0.559,6.688,7.297,0,15.613,0C23.928,0.002,30.667,6.689,30.667,14.939z M15.61,2.382c-6.979,0-12.656,5.634-12.656,12.56c0,2.748,0.896,5.292,2.411,7.362l-1.58,4.663l4.862-1.545 c2,1.312,4.393,2.076,6.963,2.076c6.979,0,12.658-5.633,12.658-12.559C28.27,8.016,22.59,2.382,15.61,2.382z M23.214,18.38c-0.094-0.151-0.34-0.243-0.708-0.427c-0.367-0.184-2.184-1.069-2.521-1.189 c-0.34-0.123-0.586-0.185-0.832,0.182c-0.243,0.367-0.951,1.191-1.168,1.437 c-0.215,0.245-0.43,0.276-0.799,0.095c-0.369-0.186-1.559-0.57-2.969-1.817 c-1.097-0.972-1.838-2.169-2.052-2.536c-0.217-0.366-0.022-0.564,0.161-0.746 c0.165-0.165,0.369-0.428,0.554-0.643c0.185-0.213,0.246-0.364,0.369-0.609 c0.121-0.245,0.06-0.458-0.031-0.643c-0.092-0.184-0.829-1.984-1.138-2.717 c-0.307-0.732-0.614-0.611-0.83-0.611c-0.215,0-0.461-0.03-0.707-0.03 S9.897,8.215,9.56,8.582s-1.291,1.252-1.291,3.054 c0,1.804,1.321,3.543,1.506,3.787c0.186,0.243,2.554,4.062,6.305,5.528 c3.753,1.465,3.753,0.976,4.429,0.914c0.678-0.062,2.184-0.885,2.49-1.739 C23.307,19.268,23.307,18.533,23.214,18.38z"/>
+  </svg>
+);
 
-const Mapa = ({ onOrigenSelect, onDestinoSelect, ruta }) => {
-  const mapRef = useRef(null);
-  const mapInstance = useRef(null);
-  const markersRef = useRef({ origen: null, destino: null });
-  const routeLayerRef = useRef(null);
-
-  useEffect(() => {
-    // Inicializar mapa una sola vez
-    if (!mapInstance.current) {
-      mapInstance.current = L.map(mapRef.current).setView([10.4631, -73.2532], 13);
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png').addTo(mapInstance.current);
-
-      mapInstance.current.on('click', async (e) => {
-        const { lat, lng } = e.latlng;
-        const coords = `${lng},${lat}`;
-
-        try {
-          const resp = await fetch(`${URL_BASE}/api/geocodificar-reversa?lat=${lat}&lon=${lng}`);
-          const data = await resp.json();
-          const address = data.direccion || coords;
-
-          // Lógica de alternancia: si no hay origen, pone origen. Si hay origen, pone destino.
-          if (!markersRef.current.origen || (markersRef.current.origen && markersRef.current.destino)) {
-            actualizarMarcador('origen', [lat, lng], 'Recogida');
-            onOrigenSelect(coords, address);
-          } else {
-            actualizarMarcador('destino', [lat, lng], 'Entrega');
-            onDestinoSelect(coords, address);
-          }
-        } catch (error) {
-          console.error("Error en mapa:", error);
-        }
-      });
-    }
-  }, []);
-
-  const actualizarMarcador = (tipo, position, label) => {
-    if (markersRef.current[tipo]) {
-      markersRef.current[tipo].setLatLng(position);
-    } else {
-      markersRef.current[tipo] = L.marker(position, {
-        icon: L.divIcon({
-          className: `custom-marker ${tipo}`,
-          html: `<div class="pin"></div><span>${label}</span>`,
-          iconSize: [30, 30]
-        })
-      }).addTo(mapInstance.current);
-    }
-
-    if (tipo === 'origen' && markersRef.current.destino) {
-      mapInstance.current.removeLayer(markersRef.current.destino);
-      markersRef.current.destino = null;
-      if (routeLayerRef.current) mapInstance.current.removeLayer(routeLayerRef.current);
-    }
-  };
-
-  // Dibujar la ruta cuando cambie en las props
-  useEffect(() => {
-    if (ruta && mapInstance.current) {
-      if (routeLayerRef.current) mapInstance.current.removeLayer(routeLayerRef.current);
-      
-      routeLayerRef.current = L.geoJSON(ruta, {
-        style: { color: '#f39c12', weight: 5, opacity: 0.7 }
-      }).addTo(mapInstance.current);
-
-      mapInstance.current.fitBounds(routeLayerRef.current.getBounds(), { padding: [50, 50] });
-    }
-  }, [ruta]);
-
-  return <div ref={mapRef} style={{ height: '100%', width: '100%' }} />;
-};
-
-export default Mapa;
+// Tu icono personalizado de GPS
+export const LogoGPS = () => (
+  <svg viewBox="0 0 24 24" fill="none" width="22" height="22" xmlns="http://www.w3.org/2000/svg">
+    <path d="M20 12C20 16.4183 16.4183 20 12 20C7.58172 20 4 16.4183 4 12C4 7.58172 7.58172 4 12 4C16.4183 4 20 7.58172 20 12Z" stroke="currentColor" strokeWidth="1.5"></path>
+    <path d="M15 12C15 13.6569 13.6569 15 12 15C10.3431 15 9 13.6569 9 12C9 10.3431 10.3431 9 12 9C13.6569 9 15 10.3431 15 12Z" stroke="currentColor" strokeWidth="1.5"></path>
+    <path d="M2 12L4 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+    <path d="M20 12L22 12" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+    <path d="M12 4V2" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+    <path d="M12 22V20" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"></path>
+  </svg>
+);
