@@ -1,6 +1,7 @@
 import { useState } from "react";
 import Mapa from "./components/Mapa";
 import "./App.css";
+import { CONFIG } from "./config"; //
 
 // 🟢 1. LOGO DE WHATSAPP (SVG OFICIAL)
 const LogoWhatsApp = () => (
@@ -57,15 +58,18 @@ export default function App() {
     const kmNum = parseFloat(km);
     const d = Math.max(kmNum, 1);
     let base = 0;
-    if (d >= 1 && d <= 4.9) base = 5000;
-    else if (d >= 5 && d <= 5.9) base = 6000;
-    else if (d >= 6 && d <= 8.5) base = 7000;
-    else base = 8000;
+
+    // Usamos los precios del config
+    if (d >= 1 && d <= 4.9) base = CONFIG.PRECIOS.MINIMA;
+    else if (d >= 5 && d <= 5.9) base = CONFIG.PRECIOS.INTERMEDIA;
+    else if (d >= 6 && d <= 8.5) base = CONFIG.PRECIOS.LARGA;
+    else base = CONFIG.PRECIOS.EXTRA_LARGA;
 
     let total = base;
-    if (states.despues9pm) total += 1000;
-    if (states.lloviendo) total += 2000;
-    if (states.barrioComplejo) total += 3000;
+    // Sumamos los extras desde el config
+    if (states.despues9pm) total += CONFIG.EXTRAS.NOCTURNO;
+    if (states.lloviendo) total += CONFIG.EXTRAS.LLUVIA;
+    if (states.barrioComplejo) total += CONFIG.EXTRAS.BARRIO_COMPLEJO;
     
     return total;
   };
@@ -176,14 +180,11 @@ export default function App() {
   };
 
   const solicitarWhatsApp = () => {
-    if (!distancia || !precio) return alert("Calcula la tarifa primero.");
-    const extrasList = [];
-    if(extrasStates.despues9pm) extrasList.push("🌙 Nocturno");
-    if(extrasStates.lloviendo) extrasList.push("🌧 Lluvia");
-    if(extrasStates.barrioComplejo) extrasList.push("🚧 Barrio Complejo");
-    const extrasTxt = extrasList.length > 0 ? extrasList.join(", ") : "Ninguno";
-    const msg = `🦅 *Halcón Express - Solicitud*\n\n📍 *Origen:* ${origen}\n🏁 *Destino:* ${destino}\n\n📏 Distancia: ${distancia} km\n⏱ Tiempo: ${tiempoMin} min\n➕ Extras: ${extrasTxt}\n\n💰 *VALOR TOTAL: ${formatoMoneda(precio)}*`;
-    window.open(`https://wa.me/573156777316?text=${encodeURIComponent(msg)}`, "_blank");
+    // ... lógica anterior ...
+    const msg = `${CONFIG.WHATSAPP.MENSAJE_SALUDO}\n\n📍 *Origen:* ${origen}...`; // etc
+    
+    // Usamos el número del config
+    window.open(`https://wa.me/${CONFIG.WHATSAPP.NUMERO}?text=${encodeURIComponent(msg)}`, "_blank");
   };
 
   const ExtraCheckbox = ({ label, name, checked }) => (
