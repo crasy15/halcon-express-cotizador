@@ -5,15 +5,17 @@ import "dotenv/config";
 const app = express();
 
 // 1. Configuración de CORS (Seguridad)
-// Solo permitimos peticiones desde tu PC (localhost) y tu App en Vercel
+// IMPORTANTE: Aquí autorizamos quién puede pedir datos al servidor.
 app.use(
   cors({
     origin: [
-      "http://localhost:5173",                   // Tu entorno local
-      "https://halcon-express-cotizador.vercel.app" // Tu producción en Vercel
+      "http://localhost:5173",                     // Tu entorno local
+      "https://halcon-express-cotizador.vercel.app", // Tu entorno de pruebas (si lo usas)
+      "https://halconexpress.site",                // ✅ TU NUEVO DOMINIO
+      "https://www.halconexpress.site"             // ✅ TU NUEVO DOMINIO (con www)
     ],
     methods: ["GET", "POST", "OPTIONS"],
-    allowedHeaders: ["Content-Type", "Authorization"], // Agregué Auth por si acaso
+    allowedHeaders: ["Content-Type", "Authorization"],
   })
 );
 
