@@ -76,10 +76,28 @@ export default function App() {
           <div className="info-card">
             <p className="price-label">Tarifa Estimada</p>
             <div className="price-tag">{formatoMoneda(precio)}</div>
+            
+            {/* --- SECCIÓN REDISEÑADA PARA MEJOR VISIBILIDAD MÓVIL --- */}
             <div className="metrics-container">
-                <div className="metric-item"><span>📏</span> {distancia} km</div>
-                <div className="metric-item"><span> ⏱ Tiempo estimado:</span> {tiempoMin.min} - {tiempoMin.max} min</div>
+                {/* Item Distancia */}
+                <div className="metric-item">
+                    <div className="metric-icon">📏</div>
+                    <div className="metric-info">
+                        <span className="metric-label">Distancia</span>
+                        <span className="metric-value">{distancia} km</span>
+                    </div>
+                </div>
+
+                {/* Item Tiempo */}
+                <div className="metric-item">
+                    <div className="metric-icon">⏱</div>
+                    <div className="metric-info">
+                        <span className="metric-label">Tiempo Est.</span>
+                        <span className="metric-value">{tiempoMin.min} - {tiempoMin.max} min</span>
+                    </div>
+                </div>
             </div>
+            {/* ------------------------------------------------------- */}
           </div>
         )}
 
