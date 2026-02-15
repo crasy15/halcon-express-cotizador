@@ -15,20 +15,21 @@
     box-sizing: border-box;
     margin: 0;
     padding: 0;
-    font-family: 'Montserrat', 'Roboto', sans-serif; /* Fuente más moderna y fuerte */
+    font-family: 'Montserrat', 'Roboto', sans-serif;
   }
   
   body, #root {
     width: 100%;
-    height: 100vh;
-    background-color: var(--halcon-black); /* Fondo general negro */
+    height: 100vh; /* Fallback */
+    height: 100dvh; /* Fix para móviles (Safari/Chrome address bar) */
+    background-color: var(--halcon-black);
     overflow: hidden;
   }
   
   /* --- CONTENEDOR PRINCIPAL (LAYOUT) --- */
   .app-container {
     display: flex;
-    height: 100vh;
+    height: 100%;
     width: 100vw;
     flex-direction: column-reverse; /* Móvil: Formulario abajo */
     background-color: var(--halcon-black);
@@ -43,7 +44,7 @@
   
   /* --- PANEL LATERAL (FORMULARIO) --- */
   .sidebar {
-    background: var(--text-light); /* Fondo blanco para máxima legibilidad del formulario */
+    background: var(--text-light);
     padding: 25px;
     overflow-y: auto;
     display: flex;
@@ -52,23 +53,33 @@
     box-shadow: var(--shadow-lg);
     z-index: 100;
     position: relative;
+    /* Scrollbar invisible pero funcional */
+    scrollbar-width: thin; 
+    scrollbar-color: var(--halcon-orange) transparent;
   }
   
   @media (min-width: 850px) {
     .sidebar {
       width: 420px;
       min-width: 420px;
-      border-right: 3px solid var(--halcon-orange); /* Línea divisoria naranja */
+      border-right: 3px solid var(--halcon-orange);
     }
   }
   
   @media (max-width: 849px) {
     .sidebar {
-      height: 60%; /* Un poco más alto en móvil */
+      /* ESTRATEGIA FLEXIBLE PARA MÓVIL */
+      /* Altura automática: se ajusta a si hay poco o mucho contenido */
+      height: auto; 
+      max-height: 80dvh; /* Nunca ocupa más del 80% de la pantalla */
+      min-height: 40dvh; /* Mínimo asegurado */
+      
       width: 100%;
       border-top-left-radius: 25px;
       border-top-right-radius: 25px;
-      border-top: 3px solid var(--halcon-orange); /* Línea superior naranja */
+      border-top: 3px solid var(--halcon-orange);
+      padding: 20px 20px 30px 20px;
+      box-shadow: 0 -5px 25px rgba(0,0,0,0.3); /* Sombra fuerte superior */
     }
   }
   
@@ -86,6 +97,7 @@
   .header p.subtitle {
     color: #666;
     font-weight: 500;
+    margin-top: -5px;
   }
   
   /* --- INPUTS --- */
@@ -108,7 +120,7 @@
     top: 50%;
     transform: translateY(-50%);
     font-size: 1.3rem;
-    color: var(--halcon-orange); /* Iconos naranjas */
+    color: var(--halcon-orange);
     z-index: 1;
   }
   
@@ -131,7 +143,7 @@
   }
   
   .styled-input:focus {
-    border-color: var(--halcon-orange); /* Borde naranja al enfocar */
+    border-color: var(--halcon-orange);
     outline: none;
     box-shadow: 0 0 0 4px rgba(255, 107, 0, 0.1);
   }
@@ -164,45 +176,81 @@
     transform: translateY(1px);
   }
   
-  /* Botón de WhatsApp específico (opcionalmente verde, pero lo dejé naranja para consistencia de marca) */
   .btn-whatsapp {
       margin-top: 10px;
       font-size: 1rem;
+      background-color: #25D366 !important; /* Verde WhatsApp Oficial */
+  }
+  .btn-whatsapp:hover {
+      background-color: #128C7E !important;
+  }
+
+  /* Botón GPS dentro del input */
+  .btn-gps {
+    position: absolute;
+    right: 10px;
+    top: 50%;
+    transform: translateY(-50%);
+    background: none;
+    border: none;
+    font-size: 1.2rem;
+    cursor: pointer;
+    padding: 5px;
+    border-radius: 50%;
+    transition: all 0.2s;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #666;
+  }
+
+  .btn-gps:hover {
+    background-color: #eee;
+    color: var(--halcon-orange);
+    transform: translateY(-50%) scale(1.1);
   }
   
   /* --- TARJETAS DE DATOS --- */
   .info-card {
-    background: var(--halcon-black); /* Tarjeta negra */
+    background: var(--halcon-black);
     color: var(--text-light);
     padding: 20px;
     border-radius: 16px;
     position: relative;
     overflow: hidden;
+    /* Ajuste para móviles pequeños */
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
   }
   
   .info-card::before {
       content: '';
       position: absolute;
       top: 0; left: 0; width: 6px; height: 100%;
-      background-color: var(--halcon-orange); /* Barra lateral naranja */
+      background-color: var(--halcon-orange);
   }
   
   .price-label {
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       text-transform: uppercase;
       letter-spacing: 1px;
       opacity: 0.8;
+      margin-bottom: 5px;
   }
   
   .price-tag {
     font-size: 2.5rem;
     font-weight: 900;
     color: var(--halcon-orange);
-    margin: 5px 0 15px 0;
+    margin: 0 0 10px 0;
+    line-height: 1;
   }
+
   
   .metrics-container {
       display: flex;
+      flex-wrap: wrap; /* Permitir que bajen de línea */
       gap: 15px;
       padding-top: 15px;
       border-top: 1px solid rgba(255,255,255,0.1);
@@ -211,10 +259,83 @@
   .metric-item {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 6px;
       font-weight: 600;
+      font-size: 0.9rem;
+      white-space: nowrap; /* Evitar quiebres feos dentro del texto */
   }
   .metric-item span { color: var(--halcon-orange); }
+
+    /* --- OPTIMIZACIÓN MÓVIL (Compacto) --- */
+    @media (max-width: 849px) {
+        .header h1 {
+            font-size: 1.4rem;
+            margin-bottom: 5px;
+        }
+        .header p.subtitle {
+            font-size: 0.85rem;
+            margin-bottom: 12px;
+        }
+        
+        .input-group {
+            gap: 10px;
+            padding: 12px;
+        }
+
+        .styled-input {
+            padding: 12px 12px 12px 40px; 
+            font-size: 0.95rem;
+        }
+        .input-icon {
+            font-size: 1.2rem;
+            left: 12px;
+        }
+
+        /* --- SOLUCIÓN ALTERNATIVA VISUAL --- */
+        /* Centrar la tarjeta de precio para que se vea como un "Ticket" */
+        .info-card {
+            padding: 15px;
+            align-items: center; /* Centrar horizontalmente */
+            text-align: center;  /* Texto centrado */
+        }
+        
+        .info-card::before {
+            /* Mover la barra naranja arriba en vez de a la izquierda */
+            top: 0; left: 0; 
+            width: 100%; height: 4px; 
+        }
+
+        .price-label {
+            font-size: 0.8rem;
+            margin-bottom: 2px;
+        }
+
+        /* TEXTO FLUIDO: Se adapta matemáticamente al ancho del celular */
+        .price-tag {
+            font-size: clamp(2rem, 10vw, 2.8rem); 
+            margin: 5px 0 10px 0;
+            line-height: 1.1;
+        }
+        
+        .metrics-container {
+            justify-content: center; /* Centrar métricas */
+            padding-top: 12px;
+            gap: 15px;
+            width: 100%;
+        }
+        
+        .metric-item {
+            font-size: 0.85rem;
+            background: rgba(255,255,255,0.1); /* Fondo sutil para destacar */
+            padding: 4px 10px;
+            border-radius: 20px;
+        }
+
+        .btn-primary, .btn-whatsapp {
+            padding: 14px;
+            font-size: 1rem;
+        }
+    }
   
   /* --- EXTRAS (CHECKBOXES) --- */
   .extras-container {
@@ -223,7 +344,6 @@
     gap: 10px;
   }
   
-  /* Checkbox personalizado */
   .extra-label {
     display: flex;
     align-items: center;
@@ -235,29 +355,28 @@
     transition: all 0.2s;
     font-weight: 600;
     color: var(--halcon-black);
+    font-size: 0.95rem;
   }
   
   .extra-label:hover { background-color: #fff5ec; }
   
-  /* Estilo cuando está seleccionado */
   .extra-label.checked {
       border-color: var(--halcon-orange);
       background-color: #fff0e0;
       color: var(--halcon-orange-dark);
   }
   
-  /* Ocultar el checkbox nativo */
   .extra-label input[type="checkbox"] { display: none; }
   
-  /* Icono del checkbox */
   .checkbox-icon {
-      width: 24px; height: 24px;
+      width: 22px; height: 22px;
       border-radius: 6px;
       border: 2px solid #ddd;
       margin-right: 12px;
       display: flex; align-items: center; justify-content: center;
       color: transparent;
       transition: all 0.2s;
+      flex-shrink: 0; /* Evitar que el icono se aplaste */
   }
   
   .extra-label.checked .checkbox-icon {
@@ -266,22 +385,21 @@
       color: white;
   }
   
-  
   /* --- MAPA --- */
   .map-container {
     flex-grow: 1;
     position: relative;
     height: 100%;
     width: 100%;
+    z-index: 1; /* Detrás del panel en móvil */
   }
   
-  /* Controles flotantes en el mapa */
   .map-controls {
     position: absolute;
     top: 20px;
     left: 50%;
     transform: translateX(-50%);
-    background: var(--halcon-black); /* Fondo negro */
+    background: var(--halcon-black);
     padding: 8px 12px;
     border-radius: 30px;
     box-shadow: var(--shadow-lg);
@@ -289,8 +407,9 @@
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 0.9rem;
+    font-size: 0.85rem;
     color: var(--text-light);
+    white-space: nowrap;
   }
   
   .pill {
@@ -305,12 +424,12 @@
   .pill:hover { background-color: rgba(255,255,255,0.2); }
   
   .pill.active {
-    background: var(--halcon-orange); /* Naranja cuando está activo */
+    background: var(--halcon-orange);
     color: var(--text-light);
     box-shadow: 0 2px 10px rgba(255, 107, 0, 0.4);
   }
 
-  /* Leaflet Overrides para que combine */
+  /* LEAFLET OVERRIDES */
   .leaflet-bar a {
     background-color: var(--halcon-black) !important;
     color: var(--halcon-orange) !important;
@@ -321,39 +440,3 @@
       color: var(--text-light) !important;
       border: 2px solid var(--halcon-orange);
   }
-
-  btn-whatsapp {
-    background-color: #25D366 !important; /* Verde WhatsApp Oficial */
-    /* ... resto de estilos ... */
-}
-  .btn-whatsapp:hover {
-      background-color: #128C7E !important; /* Verde Oscuro al pasar el mouse */
-  }
-
-  .btn-gps {
-  position: absolute;
-  right: 10px;
-  top: 50%;
-  transform: translateY(-50%);
-  background: none;
-  border: none;
-  font-size: 1.2rem;
-  cursor: pointer;
-  padding: 5px;
-  border-radius: 50%;
-  transition: all 0.2s;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  color: #666;
-}
-
-.btn-gps:hover {
-  background-color: #eee;
-  color: var(--halcon-orange); /* Se pone naranja al pasar el mouse */
-  transform: translateY(-50%) scale(1.1);
-}
-
-.btn-gps:active {
-  transform: translateY(-50%) scale(0.9);
-}
