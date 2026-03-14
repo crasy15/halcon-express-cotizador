@@ -20,6 +20,11 @@ app.use(
 
 app.use(express.json());
 
+// --- RUTA PING PARA MANTENER EL SERVIDOR DESPIERTO ---
+app.get("/ping", (req, res) => {
+  res.status(200).send("Servidor Halcon Express activo");
+});
+
 // --- CONFIGURACIÓN ARCGIS ---
 const ARCGIS_GEOCODE_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/findAddressCandidates";
 const ARCGIS_REVERSE_URL = "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer/reverseGeocode";
@@ -51,8 +56,17 @@ app.get("/geocode", async (req, res) => {
 
     let resultados = [];
     
+    // TIEMPO LÍMITE: Si Nominatim tarda más de 1.5 segundos, lo cancelamos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+
     try {
-        const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'HalconExpressCotizador/1.0' } });
+        const nomRes = await fetch(nomUrl, { 
+            headers: { 'User-Agent': 'HalconExpressCotizador/1.0' },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+        
         const nomData = await nomRes.json();
         if (nomData && nomData.length > 0) {
             resultados = [{
@@ -62,10 +76,11 @@ app.get("/geocode", async (req, res) => {
             }];
         }
     } catch(err) {
-        console.warn("Fallo Nominatim, usando ArcGIS...");
+        clearTimeout(timeoutId);
+        console.warn("Fallo o tardó Nominatim Geocode, usando ArcGIS rápido...");
     }
 
-    // Fallback a ArcGIS si Nominatim no encuentra nada
+    // Fallback a ArcGIS si Nominatim no encuentra nada o tardó demasiado
     if (resultados.length === 0) {
         const url = new URL(ARCGIS_GEOCODE_URL);
         url.searchParams.append("f", "json");
@@ -105,20 +120,29 @@ app.get("/reverse-geocode", async (req, res) => {
     nomUrl.searchParams.append("lon", lon);
     nomUrl.searchParams.append("format", "json");
     
+    // TIEMPO LÍMITE: Si Nominatim tarda más de 1.5 segundos en iniciar, lo cancelamos
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 1500);
+
     try {
-        const nomRes = await fetch(nomUrl, { headers: { 'User-Agent': 'HalconExpressCotizador/1.0' } });
+        const nomRes = await fetch(nomUrl, { 
+            headers: { 'User-Agent': 'HalconExpressCotizador/1.0' },
+            signal: controller.signal
+        });
+        clearTimeout(timeoutId);
+
         const nomData = await nomRes.json();
         if (nomData && nomData.display_name) {
             // Limpiar la dirección para no mostrar la ciudad o país repetidamente en el input
             const parts = nomData.display_name.split(',');
-            // Tomamos solo calle y barrio
             return res.json({ address: parts.slice(0, 2).join(',').trim() });
         }
     } catch(err) {
-        console.warn("Fallo Nominatim Reverse, usando ArcGIS...");
+        clearTimeout(timeoutId);
+        console.warn("Fallo o tardó Nominatim Reverse, usando ArcGIS rápido...");
     }
 
-    // Fallback ArcGIS
+    // Fallback ArcGIS: Es mucho más rápido, se usa si Nominatim se cuelga
     const url = new URL(ARCGIS_REVERSE_URL);
     url.searchParams.append("f", "json");
     url.searchParams.append("location", `${lon},${lat}`);
@@ -130,6 +154,8 @@ app.get("/reverse-geocode", async (req, res) => {
     let direccion = "Ubicación en mapa";
     if (data.address) {
       direccion = data.address.LongLabel || data.address.Match_addr;
+      // Limpiar un poco la respuesta de ArcGIS si es muy larga
+      direccion = direccion.replace(", Valledupar, Cesar", "").replace(", COL", "");
     }
     res.json({ address: direccion });
 
